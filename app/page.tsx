@@ -245,6 +245,10 @@ export default function HomePage() {
     document.getElementById("investigate")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  function removeAssessment(addressToRemove: string) {
+    setAssessmentHistory((current) => current.filter((item) => item.address !== addressToRemove));
+  }
+
   const scoreTone = risk?.threshold_exceeded ? "high" : risk?.risk_level === "elevated" ? "medium" : "low";
   const rpcHealthy = network?.status.toLowerCase() === "healthy";
   const rpcLabel = network?.status || "unknown";
@@ -286,7 +290,7 @@ export default function HomePage() {
           <section className="screening-card" id="investigate" aria-labelledby="screening-title">
             <div className="screening-copy"><div className="section-icon">⌕</div><div><h2 id="screening-title">Screen an account</h2><p>Assess recent Stellar account activity and understand the signals behind its risk score.</p></div></div>
             <form className="lookup-form" onSubmit={submitRisk}><label className="sr-only" htmlFor="stellar-address">Stellar account address</label><input id="stellar-address" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Paste a Stellar account address (G…)" autoComplete="off" spellCheck={false}/><button type="submit" disabled={riskLoading || !address.trim()}>{riskLoading ? <><span className="spinner"/> Analyzing</> : <>Analyze account <span>→</span></>}</button></form>
-            {assessmentHistory.length > 1 && <div className="assessment-history"><span>Recent screens</span>{assessmentHistory.map((item) => <button key={item.address} type="button" disabled={riskLoading} aria-label={`Show saved assessment for ${item.address}`} onClick={() => restoreAssessment(item)}>{shortAddress(item.address)}</button>)}</div>}
+            {assessmentHistory.length > 1 && <div className="assessment-history"><span>Recent screens</span>{assessmentHistory.map((item) => <span className="assessment-history-item" key={item.address}><button type="button" disabled={riskLoading} aria-label={`Show saved assessment for ${item.address}`} onClick={() => restoreAssessment(item)}>{shortAddress(item.address)}</button><button type="button" className="secondary-button remove-history-item" aria-label={`Remove saved assessment for ${item.address}`} onClick={() => removeAssessment(item.address)}>×</button></span>)}</div>}
             <div className="form-hint"><span>◎</span> Account activity is retrieved from Stellar Horizon. Scores are signals for review, not financial or compliance advice.</div>
             {riskError && <div className="notice error" role="alert"><b>Could not analyze account</b><span>{riskError}</span><small>Check the address and confirm the backend is available at {API_BASE}.</small>{risk && <small>The last successful assessment remains visible below.</small>}</div>}
           </section>
