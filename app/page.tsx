@@ -209,8 +209,13 @@ export default function HomePage() {
   function investigateEvent(account: string) {
     setAddress(account);
     setActiveSection("investigate");
-    document.getElementById("investigate")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToDashboardSection("investigate");
     void analyzeAccount(account);
+  }
+
+  function scrollToDashboardSection(sectionId: string) {
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    document.getElementById(sectionId)?.scrollIntoView({ behavior, block: "start" });
   }
 
   async function copyRiskAddress() {
@@ -242,7 +247,7 @@ export default function HomePage() {
     setRisk(result);
     setRiskError("");
     setActiveSection("investigate");
-    document.getElementById("investigate")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToDashboardSection("investigate");
   }
 
   const scoreTone = risk?.threshold_exceeded ? "high" : risk?.risk_level === "elevated" ? "medium" : "low";
