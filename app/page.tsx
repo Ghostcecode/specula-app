@@ -45,6 +45,7 @@ function Mark() {
 }
 
 function shortAddress(address: string) { return address.length > 18 ? `${address.slice(0, 8)}…${address.slice(-6)}` : address; }
+function isStellarPublicKeyFormat(address: string) { return /^G[A-Z2-7]{55}$/.test(address); }
 function formatDate(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.valueOf()) ? value : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
@@ -190,6 +191,10 @@ export default function HomePage() {
   async function analyzeAccount(value: string) {
     const account = value.trim();
     if (!account) return;
+    if (!isStellarPublicKeyFormat(account)) {
+      setRiskError("Enter a 56-character G-prefixed Stellar public account address.");
+      return;
+    }
     setRiskLoading(true); setRiskError("");
     try {
       const result = await api<RiskResult>("/risk/score", { method: "POST", body: JSON.stringify({ address: account }) });
@@ -285,7 +290,8 @@ export default function HomePage() {
 
           <section className="screening-card" id="investigate" aria-labelledby="screening-title">
             <div className="screening-copy"><div className="section-icon">⌕</div><div><h2 id="screening-title">Screen an account</h2><p>Assess recent Stellar account activity and understand the signals behind its risk score.</p></div></div>
-            <form className="lookup-form" onSubmit={submitRisk}><label className="sr-only" htmlFor="stellar-address">Stellar account address</label><input id="stellar-address" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Paste a Stellar account address (G…)" autoComplete="off" spellCheck={false}/><button type="submit" disabled={riskLoading || !address.trim()}>{riskLoading ? <><span className="spinner"/> Analyzing</> : <>Analyze account <span>→</span></>}</button></form>
+            <form className="lookup-form" onSubmit={submitRisk}><label className="sr-only" htmlFor="stellar-address">Stellar account address</label><input id="stellar-address" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Paste a Stellar account address (G…)" autoComplete="off" spellCheck={false} aria-invalid={Boolean(address.trim()) && !isStellarPublicKeyFormat(address.trim())}/><button type="submit" disabled={riskLoading || !address.trim()}>{riskLoading ? <><span className="spinner"/> Analyzing</> : <>Analyze account <span>→</span></>}</button></form>
+            {address.trim() && !isStellarPublicKeyFormat(address.trim()) && <small className="address-format-hint" role="status">Use a 56-character G-prefixed Stellar public key. This checks format only, not its checksum.</small>}
             {assessmentHistory.length > 1 && <div className="assessment-history"><span>Recent screens</span>{assessmentHistory.map((item) => <button key={item.address} type="button" disabled={riskLoading} aria-label={`Show saved assessment for ${item.address}`} onClick={() => restoreAssessment(item)}>{shortAddress(item.address)}</button>)}</div>}
             <div className="form-hint"><span>◎</span> Account activity is retrieved from Stellar Horizon. Scores are signals for review, not financial or compliance advice.</div>
             {riskError && <div className="notice error" role="alert"><b>Could not analyze account</b><span>{riskError}</span><small>Check the address and confirm the backend is available at {API_BASE}.</small>{risk && <small>The last successful assessment remains visible below.</small>}</div>}
